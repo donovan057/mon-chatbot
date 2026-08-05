@@ -1,5 +1,6 @@
-// Variable globale pour stocker l'historique de la conversation
+// Variable globale pour stocker l'historique et la session
 let chatHistory = [];
+let currentSessionId = crypto.randomUUID(); // 1. ID UNIQUE DE SESSION INITIAL
 
 // Configuration initiale de Marked.js + Highlight.js
 if (typeof marked !== 'undefined') {
@@ -20,9 +21,11 @@ document.getElementById('user-input').addEventListener('keypress', function (e) 
     if (e.key === 'Enter') { sendMessage(); }
 });
 
-// 1. Bouton Nouvelle Conversation (Mis à jour avec réinitialisation)
+// 1. Bouton Nouvelle Conversation
 document.getElementById('new-chat-btn').addEventListener('click', () => {
     chatHistory = []; // Vide la mémoire locale du chatbot
+    currentSessionId = crypto.randomUUID(); // 2. GÉNÈRE UN NOUVEAU SESSION_ID AU CLIC
+    
     const chatBox = document.getElementById('chat-box');
     chatBox.innerHTML = `
         <div class="message bot">
@@ -68,7 +71,10 @@ function sendMessage() {
     fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: recentHistory }) // Clé "messages" au pluriel
+        body: JSON.stringify({ 
+            messages: recentHistory,
+            session_id: currentSessionId // 3. TRANSMISSION DU SESSION_ID
+        })
     })
     .then(response => {
         if (!response.ok) throw new Error('Erreur réseau');
@@ -78,7 +84,7 @@ function sendMessage() {
         removeTypingIndicator();
         if (data.reply) {
             appendMessage(data.reply, 'bot');
-            // Enregistrement de la réponse (sans les guillemets)
+            // Enregistrement de la réponse
             chatHistory.push({ role: 'assistant', content: data.reply });
         } else if (data.error) {
             appendMessage(`Erreur : ${data.error}`, 'bot');
