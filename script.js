@@ -1,3 +1,6 @@
+// Variable globale pour stocker l'historique de la conversation
+let chatHistory = [];
+
 // Configuration initiale de Marked.js + Highlight.js
 if (typeof marked !== 'undefined') {
     marked.setOptions({
@@ -17,8 +20,9 @@ document.getElementById('user-input').addEventListener('keypress', function (e) 
     if (e.key === 'Enter') { sendMessage(); }
 });
 
-// 1. Bouton Nouvelle Conversation
+// 1. Bouton Nouvelle Conversation (Mis à jour avec réinitialisation)
 document.getElementById('new-chat-btn').addEventListener('click', () => {
+    chatHistory = []; // Vide la mémoire locale du chatbot
     const chatBox = document.getElementById('chat-box');
     chatBox.innerHTML = `
         <div class="message bot">
@@ -52,15 +56,19 @@ function sendMessage() {
     appendMessage(messageText, 'user');
     inputField.value = '';
 
+    // Enregistrement dans la mémoire locale
+    chatHistory.push({ role: 'user', content: messageText });
+
+    // On garde uniquement les 10 derniers messages pour alléger la requête
+    const recentHistory = chatHistory.slice(-10);
+
     showTypingIndicator();
 
     // Appel à l'API Vercel Node.js / Supabase
     fetch('/api/chat', {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({ message: messageText })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: recentHistory }) // Clé "messages" au pluriel
     })
     .then(response => {
         if (!response.ok) throw new Error('Erreur réseau');
@@ -70,6 +78,8 @@ function sendMessage() {
         removeTypingIndicator();
         if (data.reply) {
             appendMessage(data.reply, 'bot');
+            // Enregistrement de la réponse (sans les guillemets)
+            chatHistory.push({ role: 'assistant', content: data.reply });
         } else if (data.error) {
             appendMessage(`Erreur : ${data.error}`, 'bot');
         }
