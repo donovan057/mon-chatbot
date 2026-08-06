@@ -62,14 +62,24 @@
         </footer>
     </div>
 
-    <!-- Écran de Maintenance -->
+    <!-- Écran de Maintenance amélioré -->
     <div id="maintenance-overlay" class="maintenance-screen hidden">
         <div class="maintenance-card">
-            <i class="fa-solid fa-wrench maintenance-icon"></i>
+            <button id="close-maintenance-btn" class="close-maintenance" title="Fermer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="maintenance-icon-wrapper">
+                <i class="fa-solid fa-wrench maintenance-icon"></i>
+            </div>
             <h2>Maintenance en cours</h2>
             <p>Le chatbot est temporairement indisponible pour amélioration. Nous revenons très vite !</p>
+            <div class="maintenance-status">
+                <span class="status-dot"></span> Mises à jour du système en cours
+            </div>
+            <button id="close-maintenance-main-btn" class="maintenance-action-btn">Compris</button>
         </div>
     </div>
+    
 
     <!-- Librairies Externe : Marked (Markdown) + Highlight.js (Code) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

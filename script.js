@@ -278,4 +278,14 @@ function attachCopyEvents() {
     });
 }
 
+function hideMaintenanceOverlay() {
+    const overlay = document.getElementById('maintenance-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden')
+    }
+}
+
+document.getElementById('close-maintenance-btn')?.addEventListener('click', hideMaintenanceOverlay);
+document.getElementById('close-maintenance-main-btn')?.addEventListener('click', hideMaintenanceOverlay);
+
 attachCopyEvents();
