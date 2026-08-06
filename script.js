@@ -285,7 +285,7 @@ function hideMaintenanceOverlay() {
     }
 }
 
-document.getElementById('close-maintenance-btn')?.addEventListener('click', hideMaintenanceOverlay);
-document.getElementById('close-maintenance-main-btn')?.addEventListener('click', hideMaintenanceOverlay);
+document.getElementById('user-input').disabled = false;
+document.getElementById('send-btn').disabled = false;
 
 attachCopyEvents();
