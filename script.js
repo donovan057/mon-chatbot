@@ -29,37 +29,39 @@ if (typeof marked !== 'undefined') {
 }
 
 // Écouteurs d'événements pour l'envoi de message
-document.getElementById('send-btn').addEventListener('click', sendMessage);
-document.getElementById('user-input').addEventListener('keypress', function (e) {
+document.getElementById('send-btn')?.addEventListener('click', sendMessage);
+document.getElementById('user-input')?.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') { sendMessage(); }
 });
 
 // Bouton Nouvelle Conversation
-document.getElementById('new-chat-btn').addEventListener('click', () => {
+document.getElementById('new-chat-btn')?.addEventListener('click', () => {
     chatHistory = [];
     currentSessionId = generateUUID();
     
     const chatBox = document.getElementById('chat-box');
-    chatBox.innerHTML = `
-        <div class="message bot">
-            <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-            <div class="bubble-wrapper">
-                <div class="bubble">Nouvelle discussion démarrée. Que puis-je faire pour vous ?</div>
-                <button class="copy-btn" title="Copier"><i class="fa-regular fa-copy"></i></button>
-            </div>
-        </div>`;
+    if (chatBox) {
+        chatBox.innerHTML = `
+            <div class="message bot">
+                <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="bubble-wrapper">
+                    <div class="bubble">Nouvelle discussion démarrée. Que puis-je faire pour vous ?</div>
+                    <button class="copy-btn" title="Copier"><i class="fa-regular fa-copy"></i></button>
+                </div>
+            </div>`;
+    }
     attachCopyEvents();
 });
 
 // Sélecteur Sombre / Clair
 const themeBtn = document.getElementById('theme-btn');
-themeBtn.addEventListener('click', () => {
+themeBtn?.addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
     const icon = themeBtn.querySelector('i');
-    if (document.body.classList.contains('light-mode')) {
-        icon.className = 'fa-solid fa-sun';
-    } else {
-        icon.className = 'fa-solid fa-moon';
+    if (icon) {
+        icon.className = document.body.classList.contains('light-mode') 
+            ? 'fa-solid fa-sun' 
+            : 'fa-solid fa-moon';
     }
 });
 
@@ -69,13 +71,37 @@ function showMaintenanceOverlay() {
     if (overlay) {
         overlay.classList.remove('hidden');
     }
-    document.getElementById('user-input').disabled = true;
-    document.getElementById('send-btn').disabled = true;
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    if (userInput) userInput.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
 }
+
+// Fermer l'écran de maintenance et réactiver la saisie
+function hideMaintenanceOverlay() {
+    const overlay = document.getElementById('maintenance-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    if (userInput) userInput.disabled = false;
+    if (sendBtn) sendBtn.disabled = false;
+}
+
+// Écouteur global : fonctionne même si le script est chargé avant le HTML
+// et capture le clic sur l'icône FontAwesome à l'intérieur des boutons
+document.addEventListener('click', function (e) {
+    if (e.target.closest('#close-maintenance-btn') || e.target.closest('#close-maintenance-main-btn')) {
+        hideMaintenanceOverlay();
+    }
+});
 
 // Envoi du message à l'API Serverless Vercel (/api/chat)
 function sendMessage() {
     const inputField = document.getElementById('user-input');
+    if (!inputField) return;
+
     const messageText = inputField.value.trim();
     if (messageText === '') return;
 
@@ -131,6 +157,8 @@ function sendMessage() {
 // Ajout d'une bulle de message dans la zone de chat
 function appendMessage(text, type) {
     const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${type}`;
 
@@ -175,6 +203,8 @@ function appendMessage(text, type) {
 // Animation d'attente
 function showTypingIndicator() {
     const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+
     const indicator = document.createElement('div');
     indicator.id = 'typing-indicator';
     indicator.className = 'message bot';
@@ -277,15 +307,5 @@ function attachCopyEvents() {
         };
     });
 }
-
-function hideMaintenanceOverlay() {
-    const overlay = document.getElementById('maintenance-overlay');
-    if (overlay) {
-        overlay.classList.add('hidden')
-    }
-}
-
-document.getElementById('user-input').disabled = false;
-document.getElementById('send-btn').disabled = false;
 
 attachCopyEvents();
