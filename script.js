@@ -1,6 +1,19 @@
+// Fonction universelle de génération d'UUID (Compatible HTTP local et HTTPS Vercel)
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    // Fallback pour contextes non sécurisés (ex: HTTP sur IP locale)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // Variable globale pour stocker l'historique et la session
 let chatHistory = [];
-let currentSessionId = crypto.randomUUID(); // 1. ID UNIQUE DE SESSION INITIAL
+let currentSessionId = generateUUID();
 
 // Configuration initiale de Marked.js + Highlight.js
 if (typeof marked !== 'undefined') {
@@ -21,10 +34,10 @@ document.getElementById('user-input').addEventListener('keypress', function (e) 
     if (e.key === 'Enter') { sendMessage(); }
 });
 
-// 1. Bouton Nouvelle Conversation
+// Bouton Nouvelle Conversation
 document.getElementById('new-chat-btn').addEventListener('click', () => {
-    chatHistory = []; // Vide la mémoire locale du chatbot
-    currentSessionId = crypto.randomUUID(); // 2. GÉNÈRE UN NOUVEAU SESSION_ID AU CLIC
+    chatHistory = [];
+    currentSessionId = generateUUID();
     
     const chatBox = document.getElementById('chat-box');
     chatBox.innerHTML = `
@@ -38,7 +51,7 @@ document.getElementById('new-chat-btn').addEventListener('click', () => {
     attachCopyEvents();
 });
 
-// 2. Sélecteur Sombre / Clair
+// Sélecteur Sombre / Clair
 const themeBtn = document.getElementById('theme-btn');
 themeBtn.addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
@@ -50,7 +63,17 @@ themeBtn.addEventListener('click', () => {
     }
 });
 
-// 3. Envoi du message à l'API Serverless Vercel (/api/chat)
+// Afficher l'écran de maintenance et désactiver l'interface
+function showMaintenanceOverlay() {
+    const overlay = document.getElementById('maintenance-overlay');
+    if (overlay) {
+        overlay.classList.remove('hidden');
+    }
+    document.getElementById('user-input').disabled = true;
+    document.getElementById('send-btn').disabled = true;
+}
+
+// Envoi du message à l'API Serverless Vercel (/api/chat)
 function sendMessage() {
     const inputField = document.getElementById('user-input');
     const messageText = inputField.value.trim();
@@ -59,32 +82,38 @@ function sendMessage() {
     appendMessage(messageText, 'user');
     inputField.value = '';
 
-    // Enregistrement dans la mémoire locale
     chatHistory.push({ role: 'user', content: messageText });
-
-    // On garde uniquement les 10 derniers messages pour alléger la requête
     const recentHistory = chatHistory.slice(-10);
 
     showTypingIndicator();
 
-    // Appel à l'API Vercel Node.js / Supabase
     fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             messages: recentHistory,
-            session_id: currentSessionId // 3. TRANSMISSION DU SESSION_ID
+            session_id: currentSessionId
         })
     })
-    .then(response => {
-        if (!response.ok) throw new Error('Erreur réseau');
-        return response.json();
+    .then(async response => {
+        const data = await response.json();
+
+        // Détection du mode maintenance (HTTP 503)
+        if (response.status === 503 || data.maintenance) {
+            showMaintenanceOverlay();
+            throw new Error('MAINTENANCE_ACTIVE');
+        }
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Erreur réseau');
+        }
+
+        return data;
     })
     .then(data => {
         removeTypingIndicator();
         if (data.reply) {
             appendMessage(data.reply, 'bot');
-            // Enregistrement de la réponse
             chatHistory.push({ role: 'assistant', content: data.reply });
         } else if (data.error) {
             appendMessage(`Erreur : ${data.error}`, 'bot');
@@ -92,12 +121,14 @@ function sendMessage() {
     })
     .catch(error => {
         removeTypingIndicator();
+        if (error.message === 'MAINTENANCE_ACTIVE') return;
+
         console.error('Erreur:', error);
         appendMessage("Désolé, une erreur s'est produite lors de la connexion au serveur.", 'bot');
     });
 }
 
-// 4. Ajout d'une bulle de message dans la zone de chat
+// Ajout d'une bulle de message dans la zone de chat
 function appendMessage(text, type) {
     const chatBox = document.getElementById('chat-box');
     const msgDiv = document.createElement('div');
@@ -141,7 +172,7 @@ function appendMessage(text, type) {
     }
 }
 
-// 5. Animation d'attente (Indicateur de saisie)
+// Animation d'attente
 function showTypingIndicator() {
     const chatBox = document.getElementById('chat-box');
     const indicator = document.createElement('div');
@@ -161,12 +192,12 @@ function removeTypingIndicator() {
     if (indicator) indicator.remove();
 }
 
-// 6. Animation d'écriture mot par mot (Machine à écrire)
+// Machine à écrire
 function typeWriterEffect(fullText, element, chatBox) {
     const words = fullText.split(' ');
     let index = 0;
     let currentText = '';
-    const speed = 30; // Vitesse en ms par mot
+    const speed = 30;
 
     const timer = setInterval(() => {
         if (index < words.length) {
@@ -182,7 +213,6 @@ function typeWriterEffect(fullText, element, chatBox) {
             index++;
         } else {
             clearInterval(timer);
-            // Applique la coloration syntaxique du code à la fin
             if (typeof hljs !== 'undefined') {
                 element.querySelectorAll('pre code').forEach((block) => {
                     hljs.highlightElement(block);
@@ -192,7 +222,7 @@ function typeWriterEffect(fullText, element, chatBox) {
     }, speed);
 }
 
-// 7. Système de Copie Universel (HTTPS + HTTP local)
+// Système de copie
 function copyToClipboard(text, buttonEl) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text)
@@ -248,5 +278,4 @@ function attachCopyEvents() {
     });
 }
 
-// Lancement initial des événements
 attachCopyEvents();

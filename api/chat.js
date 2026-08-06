@@ -5,6 +5,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
+  // 0. Vérification du Mode Maintenance via variable d'environnement Vercel
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    return res.status(503).json({ 
+      maintenance: true, 
+      error: 'Le chatbot est actuellement en maintenance.' 
+    });
+  }
+
   // 1. Récupération et vérification des variables d'environnement
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_KEY;
@@ -45,11 +53,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Aucun message fourni' });
   }
 
-  // Extraire le dernier message utilisateur pour l'enregistrement
+  // Extraire le dernier message utilisateur
   const lastUserMsg = conversationPayload.filter(m => m.role === 'user').pop()?.content || '';
 
   try {
-    // 4. Enregistrement du message utilisateur avec vérification d'erreur
+    // 4. Enregistrement du message utilisateur dans Supabase
     if (lastUserMsg) {
       const { error: userInsertError } = await supabase
         .from('conversations')
@@ -86,7 +94,7 @@ export default async function handler(req, res) {
 
     const reply = data.choices?.[0]?.message?.content || "Désolé, une erreur est survenue.";
 
-    // 6. Enregistrement de la réponse du bot avec vérification d'erreur
+    // 6. Enregistrement de la réponse du bot dans Supabase
     const { error: botInsertError } = await supabase
       .from('conversations')
       .insert([{ 
