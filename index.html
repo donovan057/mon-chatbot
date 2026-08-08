@@ -2,42 +2,40 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assistant IA</title>
-    <!-- Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Highlight.js (Coloration Syntaxique) -->
+    <!-- Font Awesome 6.5.1 pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Marked.js & Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="chat-card">
-        <!-- En-tête avec actions -->
-        <header class="chat-header">
-            <div class="header-left">
-                <div class="avatar-container">
-                    <div class="bot-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                    <span class="status-dot"></span>
-                </div>
-                <div class="header-info">
-                    <h3>Assistant IA</h3>
-                    <p>En ligne • Modèle actif</p>
+    <div class="app-container">
+        <!-- En-tête -->
+        <header>
+            <div class="brand">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <div>
+                    <h1>Assistant IA</h1>
+                    <span class="status-indicator"><span class="dot"></span> En ligne • Modèle actif</span>
                 </div>
             </div>
             <div class="header-actions">
-                <button id="new-chat-btn" title="Nouvelle conversation">
+                <button id="new-chat-btn" class="icon-btn" title="Nouvelle conversation">
                     <i class="fa-solid fa-plus"></i>
                 </button>
-                <button id="theme-btn" title="Changer le thème">
+                <button id="theme-btn" class="icon-btn" title="Changer le thème">
                     <i class="fa-solid fa-moon"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Zone des messages -->
-        <main class="chat-messages" id="chat-box">
+        <!-- Zone de discussion -->
+        <div id="chat-box">
             <div class="message bot">
                 <div class="avatar"><i class="fa-solid fa-robot"></i></div>
                 <div class="bubble-wrapper">
@@ -45,24 +43,23 @@
                     <button class="copy-btn" title="Copier"><i class="fa-regular fa-copy"></i></button>
                 </div>
             </div>
-        </main>
+        </div>
 
         <!-- Zone de saisie -->
-        <footer class="chat-footer">
-            <div class="input-wrapper">
+        <div class="input-container">
+            <div class="input-area">
                 <input type="text" id="user-input" placeholder="Posez votre question..." autocomplete="off">
-                <button id="send-btn" aria-label="Envoyer">
+                <button id="send-btn" title="Envoyer">
                     <i class="fa-solid fa-arrow-up"></i>
                 </button>
             </div>
-
-            <p class="chat-disclaimer">
+            <p class="disclaimer">
                 <i class="fa-solid fa-circle-info"></i> L'IA peut commettre des erreurs. Vérifiez les informations importantes.
             </p>
-        </footer>
+        </div>
     </div>
 
-    <!-- Écran de Maintenance amélioré -->
+    <!-- Overlay Maintenance -->
     <div id="maintenance-overlay" class="maintenance-screen hidden">
         <div class="maintenance-card">
             <button id="close-maintenance-btn" class="close-maintenance" title="Fermer">
@@ -79,11 +76,7 @@
             <button id="close-maintenance-main-btn" class="maintenance-action-btn">Compris</button>
         </div>
     </div>
-    
 
-    <!-- Librairies Externe : Marked (Markdown) + Highlight.js (Code) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

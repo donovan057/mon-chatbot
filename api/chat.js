@@ -1,6 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
+  // En-têtes CORS pour autoriser le dev local
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
@@ -15,16 +24,18 @@ export default async function handler(req, res) {
 
   // 1. Récupération et vérification des variables d'environnement
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY;
+  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
   const groqApiKey = process.env.GROQ_API_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ ERREUR: SUPABASE_URL ou SUPABASE_KEY/SUPABASE_ANON_KEY manquant dans .env.local');
     return res.status(500).json({
       error: 'Variables SUPABASE_URL ou SUPABASE_KEY manquantes dans l’environnement.'
     });
   }
 
   if (!groqApiKey) {
+    console.error('❌ ERREUR: GROQ_API_KEY manquante dans .env.local');
     return res.status(500).json({
       error: 'Variable GROQ_API_KEY manquante dans l’environnement.'
     });
@@ -34,7 +45,7 @@ export default async function handler(req, res) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   // 3. Extraction des données de la requête
-  const { messages, message, session_id } = req.body;
+  const { messages, message, session_id } = req.body || {};
   const activeSessionId = session_id || 'default-session';
 
   // System Prompt pour définir le comportement du bot
@@ -89,6 +100,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Erreur retournée par l’API Groq :', data);
       throw new Error(data.error?.message || 'Erreur Groq API');
     }
 
@@ -109,6 +121,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ reply });
   } catch (error) {
+    console.error('Crash serveur dans api/chat.js :', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
