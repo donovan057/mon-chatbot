@@ -134,6 +134,7 @@ header {
 /* Zone de discussion */
 #chat-box {
     flex: 1;
+    min-height: 0;
     padding: 1.5rem 1.8rem;
     overflow-y: auto;
     display: flex;
@@ -238,6 +239,7 @@ header {
 
 /* Zone de saisie */
 .input-container {
+    flex-shrink: 0;
     padding: 1rem 1.8rem 1.2rem;
     border-top: 1px solid var(--panel-border);
     background: rgba(0, 0, 0, 0.2);
@@ -278,28 +280,44 @@ header {
 
 .input-area button {
     background: var(--accent-color);
-    color: white;
+    color: #ffffff;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
+    padding: 0 18px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.95rem;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
     flex-shrink: 0;
+    outline: none;
 }
 
 .input-area button:hover:not(:disabled) {
     background: var(--accent-hover);
-    transform: translateY(-1px);
+}
+
+.input-area button i {
+    font-size: 0.9rem;
 }
 
 .input-area button:disabled, .input-area input:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .input-area button span {
+        display: none;
+    }
+    .input-area button {
+        padding: 0;
+        width: 42px;
+        border-radius: 10px;
+    }
 }
 
 .disclaimer {
@@ -476,8 +494,12 @@ header {
 
 @media (max-width: 768px) {
     .app-container {
-        height: 100vh;
+        height: 100dvh;
         border-radius: 0;
         border: none;
+    }
+
+    .input-container {
+        padding: 0.8rem 1rem 1rem;
     }
 }
