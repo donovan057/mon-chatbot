@@ -1,9 +1,10 @@
-// Fonction universelle de génération d'UUID (Compatible HTTP local et HTTPS Vercel)
+// === 1. UTILITAIRES & CONFIGURATION INITIALE ===
+
+// Générateur universel d'UUID (Compatible local HTTP et Vercel HTTPS)
 function generateUUID() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
     }
-    // Fallback pour contextes non sécurisés (ex: HTTP sur IP locale)
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -11,11 +12,27 @@ function generateUUID() {
     });
 }
 
-// Variable globale pour stocker l'historique et la session
+// Variables globales de session
 let chatHistory = [];
-let currentSessionId = generateUUID();
+let currentSessionId = localStorage.getItem('session_id') || generateUUID();
+localStorage.setItem('session_id', currentSessionId);
 
-// Configuration initiale de Marked.js + Highlight.js
+// Cache mémoire pour l'affichage instantané
+const sessionsCache = new Map();
+
+// Sauvegarde locale des sessions de l'utilisateur
+function saveUserSession(sessionId) {
+    let userSessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
+    if (!userSessions.includes(sessionId)) {
+        userSessions.push(sessionId);
+        localStorage.setItem('my_sessions', JSON.stringify(userSessions));
+    }
+}
+
+// Initialisation de la première session locale
+saveUserSession(currentSessionId);
+
+// Configuration de Marked.js + Highlight.js
 if (typeof marked !== 'undefined') {
     marked.setOptions({
         highlight: function(code, lang) {
@@ -28,76 +45,77 @@ if (typeof marked !== 'undefined') {
     });
 }
 
-// Écouteurs d'événements pour l'envoi de message
-document.getElementById('send-btn')?.addEventListener('click', sendMessage);
-document.getElementById('user-input')?.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') { sendMessage(); }
-});
+// === 2. INITIALISATION & ÉCOUTEURS D'ÉVÉNEMENTS ===
 
-// Bouton Nouvelle Conversation
-document.getElementById('new-chat-btn')?.addEventListener('click', () => {
-    chatHistory = [];
-    currentSessionId = generateUUID();
-    
-    const chatBox = document.getElementById('chat-box');
-    if (chatBox) {
-        chatBox.innerHTML = `
-            <div class="message bot">
-                <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="bubble-wrapper">
-                    <div class="bubble">Nouvelle discussion démarrée. Que puis-je faire pour vous ?</div>
-                    <button class="copy-btn" title="Copier"><i class="fa-regular fa-copy"></i></button>
-                </div>
-            </div>`;
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    // Écouteurs pour l'envoi de messages
+    document.getElementById('send-btn')?.addEventListener('click', sendMessage);
+    document.getElementById('user-input')?.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') { sendMessage(); }
+    });
+
+    // Bouton Nouvelle Conversation
+    document.getElementById('new-chat-btn')?.addEventListener('click', startNewChat);
+
+    // Bouton Hamburger (3 traits) pour la sidebar & Overlay
+    const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    toggleSidebarBtn?.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            sidebar?.classList.toggle('open');
+            overlay?.classList.toggle('active');
+        } else {
+            sidebar?.classList.toggle('collapsed');
+        }
+    });
+
+    // Clic sur l'overlay pour fermer la sidebar
+    overlay?.addEventListener('click', () => {
+        sidebar?.classList.remove('open');
+        overlay?.classList.remove('active');
+    });
+
+    // Fermer la sidebar en cliquant à l'extérieur (zone vide) sur mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && sidebar?.classList.contains('open')) {
+            if (!sidebar.contains(e.target) && !toggleSidebarBtn?.contains(e.target)) {
+                sidebar.classList.remove('open');
+                overlay?.classList.remove('active');
+            }
+        }
+    });
+
+    // Sélecteur de thème Sombre / Clair
+    const themeBtn = document.getElementById('theme-btn');
+    themeBtn?.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const icon = themeBtn.querySelector('i');
+        if (icon) {
+            icon.className = document.body.classList.contains('light-mode') 
+                ? 'fa-solid fa-sun' 
+                : 'fa-solid fa-moon';
+        }
+    });
+
+    // Écouteur global pour fermer la maintenance
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('#close-maintenance-btn') || e.target.closest('#close-maintenance-main-btn')) {
+            hideMaintenanceOverlay();
+        }
+    });
+
+    // Attacher la copie aux éléments existants au chargement
     attachCopyEvents();
+
+    // Charger l'historique Supabase de la session active et la liste des sessions
+    loadHistory(currentSessionId);
+    fetchAndRenderSessions();
 });
 
-// Sélecteur Sombre / Clair
-const themeBtn = document.getElementById('theme-btn');
-themeBtn?.addEventListener('click', () => {
-    document.body.classList.toggle('light-mode');
-    const icon = themeBtn.querySelector('i');
-    if (icon) {
-        icon.className = document.body.classList.contains('light-mode') 
-            ? 'fa-solid fa-sun' 
-            : 'fa-solid fa-moon';
-    }
-});
+// === 3. LOGIQUE D'ENVOI ET RÉCEPTION DE MESSAGES ===
 
-// Afficher l'écran de maintenance et désactiver l'interface
-function showMaintenanceOverlay() {
-    const overlay = document.getElementById('maintenance-overlay');
-    if (overlay) {
-        overlay.classList.remove('hidden');
-    }
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    if (userInput) userInput.disabled = true;
-    if (sendBtn) sendBtn.disabled = true;
-}
-
-// Fermer l'écran de maintenance et réactiver la saisie
-function hideMaintenanceOverlay() {
-    const overlay = document.getElementById('maintenance-overlay');
-    if (overlay) {
-        overlay.classList.add('hidden');
-    }
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    if (userInput) userInput.disabled = false;
-    if (sendBtn) sendBtn.disabled = false;
-}
-
-// Écouteur global : fonctionne même si le script est chargé avant le HTML
-// et capture le clic sur l'icône FontAwesome à l'intérieur des boutons
-document.addEventListener('click', function (e) {
-    if (e.target.closest('#close-maintenance-btn') || e.target.closest('#close-maintenance-main-btn')) {
-        hideMaintenanceOverlay();
-    }
-});
-
-// Envoi du message à l'API Serverless Vercel (/api/chat)
 function sendMessage() {
     const inputField = document.getElementById('user-input');
     if (!inputField) return;
@@ -109,6 +127,12 @@ function sendMessage() {
     inputField.value = '';
 
     chatHistory.push({ role: 'user', content: messageText });
+
+    // Mise à jour synchrone du cache mémoire
+    if (sessionsCache.has(currentSessionId)) {
+        sessionsCache.get(currentSessionId).push({ sender: 'user', message: messageText });
+    }
+
     const recentHistory = chatHistory.slice(-10);
 
     showTypingIndicator();
@@ -124,7 +148,6 @@ function sendMessage() {
     .then(async response => {
         const data = await response.json();
 
-        // Détection du mode maintenance (HTTP 503)
         if (response.status === 503 || data.maintenance) {
             showMaintenanceOverlay();
             throw new Error('MAINTENANCE_ACTIVE');
@@ -141,6 +164,13 @@ function sendMessage() {
         if (data.reply) {
             appendMessage(data.reply, 'bot');
             chatHistory.push({ role: 'assistant', content: data.reply });
+
+            // Mise à jour du cache mémoire pour le bot
+            if (sessionsCache.has(currentSessionId)) {
+                sessionsCache.get(currentSessionId).push({ sender: 'bot', message: data.reply });
+            }
+
+            fetchAndRenderSessions(); // Mettre à jour la sidebar après réponse
         } else if (data.error) {
             appendMessage(`Erreur : ${data.error}`, 'bot');
         }
@@ -154,8 +184,82 @@ function sendMessage() {
     });
 }
 
-// Ajout d'une bulle de message dans la zone de chat
-function appendMessage(text, type) {
+// === 4. HISTORIQUE SUPABASE & CACHE MÉMOIRE ===
+
+function renderMessages(messages) {
+    const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+
+    // Si la conversation est vide sur le serveur
+    if (!messages || messages.length === 0) {
+        // Si le message d'accueil est déjà affiché à l'écran, on ne touche à rien (zéro clignotement)
+        if (chatBox.children.length === 1 && chatBox.querySelector('.message.bot')) {
+            return;
+        }
+        chatBox.innerHTML = '';
+        appendMessage("Nouvelle discussion démarrée. Que puis-je faire pour vous ?", 'bot', true);
+        return;
+    }
+
+    // Si la conversation contient des messages, charger l'historique Supabase
+    chatBox.innerHTML = '';
+    chatHistory = [];
+
+    messages.forEach(msg => {
+        const role = msg.sender === 'user' ? 'user' : 'assistant';
+        const uiType = msg.sender === 'user' ? 'user' : 'bot';
+        
+        chatHistory.push({ role: role, content: msg.message });
+        appendMessage(msg.message, uiType, true);
+    });
+}
+
+async function loadHistory(sessionId) {
+    const hasCache = sessionsCache.has(sessionId);
+
+    // 1. Restitution instantanée si disponible en cache
+    if (hasCache) {
+        renderMessages(sessionsCache.get(sessionId));
+    }
+
+    try {
+        const response = await fetch(`/api/history?session_id=${sessionId}`);
+        const data = await response.json();
+
+        if (response.ok && Array.isArray(data.messages)) {
+            const previousMessages = sessionsCache.get(sessionId);
+            sessionsCache.set(sessionId, data.messages);
+
+            // Mettre à jour le DOM uniquement si l'utilisateur est toujours sur cette session
+            // ET si les données ont réellement changé ou n'étaient pas en cache
+            if (sessionId === currentSessionId) {
+                const hasChanged = JSON.stringify(previousMessages) !== JSON.stringify(data.messages);
+                if (!hasCache || hasChanged) {
+                    renderMessages(data.messages);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Erreur lors du chargement de l'historique :", error);
+    }
+}
+
+function startNewChat() {
+    chatHistory = [];
+    currentSessionId = generateUUID();
+    localStorage.setItem('session_id', currentSessionId);
+    saveUserSession(currentSessionId);
+    
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox) chatBox.innerHTML = '';
+    
+    appendMessage("Nouvelle discussion démarrée. Que puis-je faire pour vous ?", 'bot', true);
+    fetchAndRenderSessions();
+}
+
+// === 5. AFFICHAGE & MANIPULATION DU DOM ===
+
+function appendMessage(text, type, skipAnimation = false) {
     const chatBox = document.getElementById('chat-box');
     if (!chatBox) return;
 
@@ -192,34 +296,19 @@ function appendMessage(text, type) {
     msgDiv.appendChild(wrapperDiv);
     chatBox.appendChild(msgDiv);
 
-    if (type === 'bot') {
+    if (type === 'bot' && !skipAnimation) {
         typeWriterEffect(text, bubbleDiv, chatBox);
     } else {
-        bubbleDiv.textContent = text;
+        if (type === 'bot' && typeof marked !== 'undefined') {
+            bubbleDiv.innerHTML = marked.parse(text);
+            if (typeof hljs !== 'undefined') {
+                bubbleDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+            }
+        } else {
+            bubbleDiv.textContent = text;
+        }
         chatBox.scrollTop = chatBox.scrollHeight;
     }
-}
-
-// Animation d'attente
-function showTypingIndicator() {
-    const chatBox = document.getElementById('chat-box');
-    if (!chatBox) return;
-
-    const indicator = document.createElement('div');
-    indicator.id = 'typing-indicator';
-    indicator.className = 'message bot';
-    indicator.innerHTML = `
-        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-        <div class="bubble typing-dots">
-            <span></span><span></span><span></span>
-        </div>`;
-    chatBox.appendChild(indicator);
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-function removeTypingIndicator() {
-    const indicator = document.getElementById('typing-indicator');
-    if (indicator) indicator.remove();
 }
 
 // Machine à écrire
@@ -252,7 +341,50 @@ function typeWriterEffect(fullText, element, chatBox) {
     }, speed);
 }
 
-// Système de copie
+// Indicateurs de chargement
+function showTypingIndicator() {
+    const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+
+    const indicator = document.createElement('div');
+    indicator.id = 'typing-indicator';
+    indicator.className = 'message bot';
+    indicator.innerHTML = `
+        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="bubble typing-dots">
+            <span></span><span></span><span></span>
+        </div>`;
+    chatBox.appendChild(indicator);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) indicator.remove();
+}
+
+// === 6. MAINTENANCE & SYSTÈME DE COPIE ===
+
+function showMaintenanceOverlay() {
+    const overlay = document.getElementById('maintenance-overlay');
+    if (overlay) overlay.classList.remove('hidden');
+
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    if (userInput) userInput.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+}
+
+function hideMaintenanceOverlay() {
+    const overlay = document.getElementById('maintenance-overlay');
+    if (overlay) overlay.classList.add('hidden');
+
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    if (userInput) userInput.disabled = false;
+    if (sendBtn) sendBtn.disabled = false;
+}
+
 function copyToClipboard(text, buttonEl) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text)
@@ -308,4 +440,89 @@ function attachCopyEvents() {
     });
 }
 
-attachCopyEvents();
+// === 7. GESTION DES SESSIONS SIDEBAR & SUPPRESSION ===
+
+async function fetchAndRenderSessions() {
+    try {
+        saveUserSession(currentSessionId);
+        const mySessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
+
+        const response = await fetch('/api/sessions');
+        const data = await response.json();
+
+        if (response.ok && Array.isArray(data.sessions)) {
+            const sidebarContainer = document.getElementById('sessions-list');
+            if (!sidebarContainer) return;
+
+            sidebarContainer.innerHTML = '';
+
+            // Filtrer pour ne conserver que les sessions créées par ce navigateur
+            const userOnlySessions = data.sessions.filter(s => mySessions.includes(s.session_id));
+
+            userOnlySessions.forEach(session => {
+                const item = document.createElement('div');
+                const isActive = session.session_id === currentSessionId ? 'active' : '';
+                item.className = `session-item ${isActive}`;
+
+                item.innerHTML = `
+                    <div class="session-info">
+                        <i class="fa-regular fa-message"></i>
+                        <span>${session.preview || 'Discussion'}</span>
+                    </div>
+                    <button class="delete-session-btn" title="Supprimer la conversation">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+
+                item.onclick = () => {
+                    currentSessionId = session.session_id;
+                    localStorage.setItem('session_id', currentSessionId);
+                    loadHistory(currentSessionId);
+                    fetchAndRenderSessions();
+
+                    if (window.innerWidth <= 768) {
+                        document.querySelector('.sidebar')?.classList.remove('open');
+                        document.getElementById('sidebar-overlay')?.classList.remove('active');
+                    }
+                };
+
+                const deleteBtn = item.querySelector('.delete-session-btn');
+                deleteBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (confirm("Voulez-vous vraiment supprimer cette conversation ?")) {
+                        await deleteSession(session.session_id);
+                    }
+                };
+
+                sidebarContainer.appendChild(item);
+            });
+        }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des sessions :", error);
+    }
+}
+
+async function deleteSession(sessionId) {
+    try {
+        const response = await fetch(`/api/delete-session?session_id=${sessionId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            sessionsCache.delete(sessionId);
+            
+            // Retirer également la session supprimée du localStorage
+            let userSessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
+            userSessions = userSessions.filter(id => id !== sessionId);
+            localStorage.setItem('my_sessions', JSON.stringify(userSessions));
+
+            if (sessionId === currentSessionId) {
+                startNewChat();
+            } else {
+                fetchAndRenderSessions();
+            }
+        }
+    } catch (error) {
+        console.error("Erreur lors de la suppression de la session :", error);
+    }
+}

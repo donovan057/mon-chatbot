@@ -10,6 +10,7 @@
 :root {
     --bg-color: #0b0f19;
     --panel-bg: rgba(18, 24, 38, 0.85);
+    --sidebar-bg: rgba(11, 15, 25, 0.5);
     --panel-border: rgba(255, 255, 255, 0.08);
     --text-main: #f1f5f9;
     --text-muted: #94a3b8;
@@ -24,6 +25,7 @@
 body.light-mode {
     --bg-color: #f8fafc;
     --panel-bg: rgba(255, 255, 255, 0.9);
+    --sidebar-bg: rgba(241, 245, 249, 0.7);
     --panel-border: rgba(0, 0, 0, 0.08);
     --text-main: #0f172a;
     --text-muted: #64748b;
@@ -46,12 +48,13 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Application Container */
 .app-container {
     width: 100%;
-    max-width: 900px;
+    max-width: 1100px;
     height: 90vh;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background: var(--panel-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -62,20 +65,177 @@ body {
     position: relative;
 }
 
-/* En-tête */
+/* === SIDEBAR (Gauche) === */
+.sidebar {
+    width: 320px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100%;
+    transition: margin-left 0.3s ease, transform 0.3s ease;
+    z-index: 100;
+}
+
+.sidebar.collapsed {
+    margin-left: -320px;
+}
+
+.sidebar-header {
+    padding: 1.2rem 1.2rem;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.sidebar-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.sessions-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sessions-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sessions-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.sessions-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.loading-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 12px;
+    text-align: center;
+}
+
+/* Élément de la liste des sessions */
+.session-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.session-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.session-info i {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.session-info span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.session-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+}
+
+body.light-mode .session-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.session-item.active {
+    background: var(--accent-color);
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.session-item.active .delete-session-btn {
+    color: rgba(255, 255, 255, 0.85);
+    opacity: 0.85;
+}
+
+/* Croix de suppression */
+.delete-session-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.session-item:hover .delete-session-btn {
+    opacity: 1;
+    color: #ffffff;
+}
+
+.delete-session-btn:hover {
+    color: #ffffff;
+    background: #ef4444;
+    opacity: 1;
+}
+
+/* === ZONE PRINCIPALE CHAT (Droite) === */
+.main-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+}
+
+/* En-tête centré */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.2rem 1.8rem;
+    padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--panel-border);
     background: rgba(0, 0, 0, 0.15);
+    position: relative;
 }
 
+/* Marque IA centrée */
 .brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .brand i {
@@ -84,24 +244,26 @@ header {
 }
 
 .brand h1 {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: var(--text-main);
     line-height: 1.2;
 }
 
 .status-indicator {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     margin-top: 2px;
+    white-space: nowrap;
 }
 
 .status-indicator .dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     background-color: #10b981;
     border-radius: 50%;
     box-shadow: 0 0 6px #10b981;
@@ -146,6 +308,7 @@ header {
 #chat-box::-webkit-scrollbar {
     width: 6px;
 }
+
 #chat-box::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
@@ -220,13 +383,14 @@ header {
 
 .copy-btn {
     align-self: flex-end;
-    background: transparent;
-    border: none;
+    background: transparent !important;
+    border: none !important;
     color: var(--text-muted);
     cursor: pointer;
     font-size: 0.85rem;
     padding: 4px 6px;
     border-radius: 6px;
+    width: fit-content;
     transition: all 0.2s ease;
     opacity: 0.6;
 }
@@ -234,7 +398,7 @@ header {
 .copy-btn:hover {
     opacity: 1;
     color: var(--text-main);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Zone de saisie */
@@ -309,17 +473,6 @@ header {
     cursor: not-allowed;
 }
 
-@media (max-width: 480px) {
-    .input-area button span {
-        display: none;
-    }
-    .input-area button {
-        padding: 0;
-        width: 42px;
-        border-radius: 10px;
-    }
-}
-
 .disclaimer {
     text-align: center;
     font-size: 0.75rem;
@@ -349,7 +502,7 @@ header {
 .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
 .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
 
-/* Ecran de maintenance */
+/* Écran de maintenance */
 .maintenance-screen {
     position: fixed;
     inset: 0;
@@ -472,6 +625,7 @@ header {
     background: #d97706;
 }
 
+/* Keyframes Animations */
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -492,14 +646,70 @@ header {
     to { opacity: 1; transform: scale(1); }
 }
 
+.sidebar-overlay {
+    display: none;
+}
+
+/* === RESPONSIVITÉ MOBILE === */
 @media (max-width: 768px) {
+    .sidebar-overlay.active {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 90;
+        backdrop-filter: blur(2px);
+    }
+
     .app-container {
         height: 100dvh;
         border-radius: 0;
         border: none;
     }
 
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 80%;
+        max-width: 300px;
+        height: 100%;
+        background: var(--bg-color);
+        transform: translateX(-100%);
+        margin-left: 0 !important;
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8);
+        z-index: 100;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .brand h1 {
+        font-size: 0.95rem;
+    }
+
+    .status-indicator {
+        display: none;
+    }
+
     .input-container {
         padding: 0.8rem 1rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand h1 {
+        font-size: 0.85rem;
+    }
+
+    .input-area button span {
+        display: none;
+    }
+
+    .input-area button {
+        padding: 0;
+        width: 42px;
+        border-radius: 10px;
     }
 }
