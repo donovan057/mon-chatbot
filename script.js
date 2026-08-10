@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bouton Nouvelle Conversation
     document.getElementById('new-chat-btn')?.addEventListener('click', startNewChat);
 
+    // Bouton Tout supprimer 
+    document.getElementById('clear-all-btn')?.addEventListener('click', clearAllSessions);
+
     // Bouton Hamburger (3 traits) pour la sidebar & Overlay
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
     const sidebar = document.querySelector('.sidebar');
@@ -192,7 +195,6 @@ function renderMessages(messages) {
 
     // Si la conversation est vide sur le serveur
     if (!messages || messages.length === 0) {
-        // Si le message d'accueil est déjà affiché à l'écran, on ne touche à rien (zéro clignotement)
         if (chatBox.children.length === 1 && chatBox.querySelector('.message.bot')) {
             return;
         }
@@ -231,7 +233,6 @@ async function loadHistory(sessionId) {
             sessionsCache.set(sessionId, data.messages);
 
             // Mettre à jour le DOM uniquement si l'utilisateur est toujours sur cette session
-            // ET si les données ont réellement changé ou n'étaient pas en cache
             if (sessionId === currentSessionId) {
                 const hasChanged = JSON.stringify(previousMessages) !== JSON.stringify(data.messages);
                 if (!hasCache || hasChanged) {
@@ -489,9 +490,8 @@ async function fetchAndRenderSessions() {
                 const deleteBtn = item.querySelector('.delete-session-btn');
                 deleteBtn.onclick = async (e) => {
                     e.stopPropagation();
-                    if (confirm("Voulez-vous vraiment supprimer cette conversation ?")) {
-                        await deleteSession(session.session_id);
-                    }
+                    // Appel direct de la fonction personnalisée (pas de confirm() natif)
+                    await deleteSession(session.session_id);
                 };
 
                 sidebarContainer.appendChild(item);
@@ -503,6 +503,15 @@ async function fetchAndRenderSessions() {
 }
 
 async function deleteSession(sessionId) {
+    const confirmDelete = await showCustomModal({
+        title: "Supprimer la conversation ?",
+        message: "Cette action est irréversible et supprimera l'historique.",
+        confirmText: "Supprimer",
+        iconType: "warning"
+    });
+
+    if (!confirmDelete) return;
+
     try {
         const response = await fetch(`/api/delete-session?session_id=${sessionId}`, {
             method: 'DELETE'
@@ -511,7 +520,6 @@ async function deleteSession(sessionId) {
         if (response.ok) {
             sessionsCache.delete(sessionId);
             
-            // Retirer également la session supprimée du localStorage
             let userSessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
             userSessions = userSessions.filter(id => id !== sessionId);
             localStorage.setItem('my_sessions', JSON.stringify(userSessions));
@@ -525,4 +533,95 @@ async function deleteSession(sessionId) {
     } catch (error) {
         console.error("Erreur lors de la suppression de la session :", error);
     }
+}
+
+async function clearAllSessions() {
+    const mySessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
+
+    if (mySessions.length === 0) {
+        await showCustomModal({
+            title: "Aucune conversation",
+            message: "Vous n'avez aucune conversation à supprimer.",
+            isAlert: true,
+            confirmText: "Compris",
+            iconType: "info"
+        });
+        return;
+    }
+
+    const confirmDelete = await showCustomModal({
+        title: "Tout supprimer ?",
+        message: "Voulez-vous vraiment supprimer TOUTES vos conversations ? Cette action est définitive.",
+        confirmText: "Tout effacer",
+        iconType: "warning"
+    });
+
+    if (!confirmDelete) return;
+
+    try {
+        await Promise.all(mySessions.map(sessionId =>
+            fetch(`/api/delete-session?session_id=${sessionId}`, { method: 'DELETE' })
+        ));
+
+        sessionsCache.clear();
+        localStorage.removeItem('my_sessions');
+        startNewChat();
+    } catch (error) {
+        console.error("Erreur lors de la suppression globale :", error);
+    }
+}
+
+// Fonction pour ouvrir la modale personnalisée sous forme de Promise
+function showCustomModal({ title, message, isAlert = false, confirmText = "Confirmer", iconType = "warning" }) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('custom-modal');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const iconEl = document.getElementById('modal-icon');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+
+        if (!modal) {
+            resolve(confirm(message));
+            return;
+        }
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        confirmBtn.textContent = confirmText;
+
+        // Type d'icône & couleur du bouton de confirmation
+        iconEl.className = `modal-icon ${iconType}`;
+        if (iconType === 'warning') {
+            iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            confirmBtn.style.background = '#ef4444';
+        } else {
+            iconEl.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+            confirmBtn.style.background = '#3b82f6';
+        }
+
+        // Mode Alerte (un seul bouton) vs Confirmation (deux boutons)
+        cancelBtn.style.display = isAlert ? 'none' : 'block';
+
+        modal.classList.remove('hidden');
+
+        const handleConfirm = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            modal.classList.add('hidden');
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+    });
 }

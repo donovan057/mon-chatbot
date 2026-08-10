@@ -16,15 +16,27 @@
 
     <div class="app-container">
 
+        <!-- Voile sombre sur mobile -->
         <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
         <!-- Sidebar (Gauche) -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>Historique</h2>
+                <div class="sidebar-title">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <h2>Historique</h2>
+                </div>
             </div>
+
             <div id="sessions-list" class="sessions-list">
                 <p class="loading-text">Chargement des conversations...</p>
+            </div>
+
+            <div class="sidebar-actions">
+                <button id="clear-all-btn" class="clear-all-btn" title="Tout supprimer">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Tout effacer</span>
+                </button>
             </div>
         </aside>
 
@@ -94,6 +106,20 @@
                 <span class="status-dot"></span> Mises à jour du système en cours
             </div>
             <button id="close-maintenance-main-btn" class="maintenance-action-btn">Compris</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div id="modal-icon" class="modal-icon warning">
+                <i class="fa-solid fa-triangl-exclamation"></i>
+            </div>
+            <h3 id="modal-title">Supprimer la conversation ?</h3>
+            <p id="modal-message">Cette action est irréversible.</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="modal-btn cancel">Annuler</button>
+                <button id="modal-confirm-btn" class="modal-btn confirm">Supprimer</button>
+            </div>
         </div>
     </div>
 

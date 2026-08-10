@@ -1,12 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
+/* ==========================================================================
+   1. VARIABLES & THÈMES
+   ========================================================================== */
 :root {
     --bg-color: #0b0f19;
     --panel-bg: rgba(18, 24, 38, 0.85);
@@ -37,6 +33,16 @@ body.light-mode {
     --input-bg: rgba(0, 0, 0, 0.03);
 }
 
+/* ==========================================================================
+   2. RESET & BASE
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
@@ -48,7 +54,7 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Application Container */
+/* Container principal de l'application */
 .app-container {
     width: 100%;
     max-width: 1100px;
@@ -65,7 +71,9 @@ body {
     position: relative;
 }
 
-/* === SIDEBAR (Gauche) === */
+/* ==========================================================================
+   3. SIDEBAR (GAUCHE)
+   ========================================================================== */
 .sidebar {
     width: 320px;
     background: var(--sidebar-bg);
@@ -83,16 +91,52 @@ body {
 }
 
 .sidebar-header {
-    padding: 1.2rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.2rem;
     border-bottom: 1px solid var(--panel-border);
 }
 
-.sidebar-header h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-main);
+.sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
+.sidebar-title i {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.sidebar-title h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+.new-chat-icon-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--panel-border);
+    color: var(--text-main);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.new-chat-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+/* Liste des sessions */
 .sessions-list {
     flex: 1;
     overflow-y: auto;
@@ -112,10 +156,6 @@ body {
     border-radius: 10px;
 }
 
-.sessions-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
 .loading-text {
     font-size: 0.85rem;
     color: var(--text-muted);
@@ -123,7 +163,6 @@ body {
     text-align: center;
 }
 
-/* Élément de la liste des sessions */
 .session-item {
     display: flex;
     align-items: center;
@@ -176,7 +215,7 @@ body.light-mode .session-item:hover {
     opacity: 0.85;
 }
 
-/* Croix de suppression */
+/* Bouton individuel de suppression */
 .delete-session-btn {
     background: transparent;
     border: none;
@@ -196,12 +235,54 @@ body.light-mode .session-item:hover {
 }
 
 .delete-session-btn:hover {
-    color: #ffffff;
-    background: #ef4444;
-    opacity: 1;
+    color: #ffffff !important;
+    background: #ef4444 !important;
+    opacity: 1 !important;
 }
 
-/* === ZONE PRINCIPALE CHAT (Droite) === */
+/* Footer fixe de la Sidebar */
+.sidebar-footer {
+    padding: 0.8rem 1rem;
+    border-top: 1px solid var(--panel-border);
+    background: inherit;
+}
+
+.clear-all-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.clear-all-btn i {
+    font-size: 0.9rem;
+}
+
+.clear-all-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transform: translateY(-1px);
+}
+
+.clear-all-btn:active {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   4. ZONE PRINCIPALE DE CHAT (DROITE)
+   ========================================================================== */
 .main-chat {
     flex: 1;
     display: flex;
@@ -210,7 +291,7 @@ body.light-mode .session-item:hover {
     min-width: 0;
 }
 
-/* En-tête centré */
+/* Header principal */
 header {
     display: flex;
     justify-content: space-between;
@@ -232,26 +313,26 @@ header {
     text-align: center;
 }
 
+.brand i {
+    font-size: 1.3rem;
+    color: var(--accent-color);
+}
+
 .brand-text {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.brand i {
-    font-size: 1.4rem;
-    color: var(--accent-color);
-}
-
 .brand h1 {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-main);
     line-height: 1.2;
 }
 
 .status-indicator {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     display: flex;
     align-items: center;
@@ -293,7 +374,9 @@ header {
     transform: translateY(-2px);
 }
 
-/* Zone de discussion */
+/* ==========================================================================
+   5. FIL DE DISCUSSION & MESSAGES
+   ========================================================================== */
 #chat-box {
     flex: 1;
     min-height: 0;
@@ -314,11 +397,10 @@ header {
     border-radius: 10px;
 }
 
-/* Messages */
 .message {
     display: flex;
     gap: 12px;
-    max-width: 82%;
+    max-width: 85%;
     animation: slideUp 0.25s ease-out forwards;
 }
 
@@ -344,7 +426,7 @@ header {
 
 .message.user .avatar {
     background: var(--accent-color);
-    color: #fff;
+    color: #ffffff;
 }
 
 .message.bot .avatar {
@@ -381,6 +463,7 @@ header {
     border-top-left-radius: 4px;
 }
 
+/* Bouton Copier sous la bulle du bot */
 .copy-btn {
     align-self: flex-end;
     background: transparent !important;
@@ -401,7 +484,28 @@ header {
     background: rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Zone de saisie */
+/* Animation machine à écrire & points de chargement */
+.typing-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 0.9rem 1.15rem;
+}
+
+.typing-dots span {
+    width: 7px;
+    height: 7px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+/* ==========================================================================
+   6. ZONE DE SAISIE (INPUT)
+   ========================================================================== */
 .input-container {
     flex-shrink: 0;
     padding: 1rem 1.8rem 1.2rem;
@@ -458,14 +562,11 @@ header {
     cursor: pointer;
     flex-shrink: 0;
     outline: none;
+    transition: background 0.2s ease;
 }
 
 .input-area button:hover:not(:disabled) {
     background: var(--accent-hover);
-}
-
-.input-area button i {
-    font-size: 0.9rem;
 }
 
 .input-area button:disabled, .input-area input:disabled {
@@ -483,26 +584,124 @@ header {
     gap: 6px;
 }
 
-/* Animation de saisie */
-.typing-dots {
+/* ==========================================================================
+   7. MODALES & OVERLAYS
+   ========================================================================== */
+
+/* --- Modal Personnalisée Animée --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
-    gap: 6px;
     align-items: center;
-    padding: 0.9rem 1.15rem;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.typing-dots span {
-    width: 7px;
-    height: 7px;
-    background: var(--text-muted);
+.modal-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.modal-card {
+    background: var(--bg-color);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 1.75rem;
+    width: 90%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65);
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1),
+                opacity 0.2s ease-out;
+}
+
+.modal-overlay.hidden .modal-card {
+    transform: scale(0.88) translateY(12px);
+    opacity: 0;
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    animation: bounce 1.4s infinite ease-in-out both;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
 }
 
-.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.modal-icon.warning {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
 
-/* Écran de maintenance */
+.modal-icon.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.modal-card h3 {
+    color: var(--text-main);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.modal-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.modal-btn.cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.modal-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.modal-btn.confirm {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.modal-btn.confirm:hover {
+    background: #dc2626;
+}
+
+/* --- Écran de Maintenance --- */
 .maintenance-screen {
     position: fixed;
     inset: 0;
@@ -625,7 +824,9 @@ header {
     background: #d97706;
 }
 
-/* Keyframes Animations */
+/* ==========================================================================
+   8. ANIMATIONS KEYFRAMES
+   ========================================================================== */
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -646,12 +847,21 @@ header {
     to { opacity: 1; transform: scale(1); }
 }
 
+/* ==========================================================================
+   9. RESPONSIVE DESIGN (MOBILE & TABLETTE)
+   ========================================================================== */
 .sidebar-overlay {
     display: none;
 }
 
-/* === RESPONSIVITÉ MOBILE === */
 @media (max-width: 768px) {
+    .app-container {
+        height: 100dvh;
+        border-radius: 0;
+        border: none;
+    }
+
+    /* Modale de fond flouté lors de l'ouverture sidebar mobile */
     .sidebar-overlay.active {
         display: block;
         position: fixed;
@@ -659,12 +869,6 @@ header {
         background: rgba(0, 0, 0, 0.5);
         z-index: 90;
         backdrop-filter: blur(2px);
-    }
-
-    .app-container {
-        height: 100dvh;
-        border-radius: 0;
-        border: none;
     }
 
     .sidebar {
@@ -685,12 +889,26 @@ header {
         transform: translateX(0);
     }
 
+    /* En-tête mobile centré */
+    header {
+        position: relative;
+        padding: 0.6rem 0.8rem;
+    }
+
+    .brand {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 0.5rem;
+    }
+
     .brand h1 {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
 
     .status-indicator {
-        display: none;
+        display: flex !important;
+        font-size: 0.68rem;
     }
 
     .input-container {
