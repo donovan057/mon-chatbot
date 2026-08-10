@@ -1,11 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  // En-têtes CORS pour autoriser le dev local
+  // 1. En-têtes CORS complets (Permet les requêtes depuis l'émulateur Android et Capacitor)
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, PATCH, DELETE, POST, PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
 
+  // Réponse immédiate aux requêtes de pré-vérification (preflight) OPTIONS
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -14,7 +19,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  // 0. Vérification du Mode Maintenance via variable d'environnement Vercel
+  // 2. Vérification du Mode Maintenance via variable d'environnement
   if (process.env.MAINTENANCE_MODE === 'true') {
     return res.status(503).json({ 
       maintenance: true, 
@@ -22,33 +27,33 @@ export default async function handler(req, res) {
     });
   }
 
-  // 1. Récupération et vérification des variables d'environnement
+  // 3. Récupération et vérification des variables d'environnement
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
   const groqApiKey = process.env.GROQ_API_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ ERREUR: SUPABASE_URL ou SUPABASE_KEY/SUPABASE_ANON_KEY manquant dans .env.local');
+    console.error('❌ ERREUR: SUPABASE_URL ou SUPABASE_KEY/SUPABASE_ANON_KEY manquant.');
     return res.status(500).json({
       error: 'Variables SUPABASE_URL ou SUPABASE_KEY manquantes dans l’environnement.'
     });
   }
 
   if (!groqApiKey) {
-    console.error('❌ ERREUR: GROQ_API_KEY manquante dans .env.local');
+    console.error('❌ ERREUR: GROQ_API_KEY manquante.');
     return res.status(500).json({
       error: 'Variable GROQ_API_KEY manquante dans l’environnement.'
     });
   }
 
-  // 2. Initialisation du client Supabase
+  // 4. Initialisation du client Supabase
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // 3. Extraction des données de la requête
+  // 5. Extraction des données de la requête
   const { messages, message, session_id } = req.body || {};
   const activeSessionId = session_id || 'default-session';
 
-  // System Prompt pour définir le comportement du bot
+  // System Prompt
   const systemPrompt = {
     role: 'system',
     content: 'Tu es un assistant IA précis, courtois et utile. Tu te souviens des messages précédents dans la conversation.'
@@ -68,7 +73,7 @@ export default async function handler(req, res) {
   const lastUserMsg = conversationPayload.filter(m => m.role === 'user').pop()?.content || '';
 
   try {
-    // 4. Enregistrement du message utilisateur dans Supabase
+    // 6. Enregistrement du message utilisateur dans Supabase
     if (lastUserMsg) {
       const { error: userInsertError } = await supabase
         .from('conversations')
@@ -83,7 +88,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 5. Envoi à l'API Groq
+    // 7. Envoi à l'API Groq
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -106,7 +111,7 @@ export default async function handler(req, res) {
 
     const reply = data.choices?.[0]?.message?.content || "Désolé, une erreur est survenue.";
 
-    // 6. Enregistrement de la réponse du bot dans Supabase
+    // 8. Enregistrement de la réponse du bot dans Supabase
     const { error: botInsertError } = await supabase
       .from('conversations')
       .insert([{ 
