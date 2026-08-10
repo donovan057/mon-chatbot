@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant IA</title>
+    <!-- Font Awesome 6.5.1 pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Marked.js & Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- Voile sombre sur mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar (Gauche) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <h2>Historique</h2>
+                </div>
+            </div>
+
+            <div id="sessions-list" class="sessions-list">
+                <p class="loading-text">Chargement des conversations...</p>
+            </div>
+
+            <div class="sidebar-actions">
+                <button id="clear-all-btn" class="clear-all-btn" title="Tout supprimer">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Tout effacer</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Zone Principale Chat (Droite) -->
+        <div class="main-chat">
+            <!-- En-tête -->
+            <header>
+                <button id="toggle-sidebar-btn" class="icon-btn" title="Afficher / Masquer l'historique">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="brand">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <div class="brand-text">
+                        <h1>Assistant IA</h1>
+                        <span class="status-indicator"><span class="dot"></span> En ligne • Modèle actif</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="new-chat-btn" class="icon-btn" title="Nouvelle conversation">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button id="theme-btn" class="icon-btn" title="Changer le thème">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Zone de discussion -->
+            <div id="chat-box">
+                <div class="message bot">
+                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="bubble-wrapper">
+                        <div class="bubble">Nouvelle discussion démarrée. Que puis-je faire pour vous ?</div>
+                        <button class="copy-btn" title="Copier"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone de saisie -->
+            <div class="input-container">
+                <div class="input-area">
+                    <input type="text" id="user-input" placeholder="Posez votre question..." autocomplete="off">
+                    <button id="send-btn" title="Envoyer">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <p class="disclaimer">
+                    <i class="fa-solid fa-circle-info"></i> L'IA peut commettre des erreurs. Vérifiez les informations importantes.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay Maintenance -->
+    <div id="maintenance-overlay" class="maintenance-screen hidden">
+        <div class="maintenance-card">
+            <button id="close-maintenance-btn" class="close-maintenance" title="Fermer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="maintenance-icon-wrapper">
+                <i class="fa-solid fa-wrench maintenance-icon"></i>
+            </div>
+            <h2>Maintenance en cours</h2>
+            <p>Le chatbot est temporairement indisponible pour amélioration. Nous revenons très vite !</p>
+            <div class="maintenance-status">
+                <span class="status-dot"></span> Mises à jour du système en cours
+            </div>
+            <button id="close-maintenance-main-btn" class="maintenance-action-btn">Compris</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div id="modal-icon" class="modal-icon warning">
+                <i class="fa-solid fa-triangl-exclamation"></i>
+            </div>
+            <h3 id="modal-title">Supprimer la conversation ?</h3>
+            <p id="modal-message">Cette action est irréversible.</p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="modal-btn cancel">Annuler</button>
+                <button id="modal-confirm-btn" class="modal-btn confirm">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
