@@ -859,12 +859,15 @@ header {
 }
 
 @media (max-width: 768px) {
+    /* Conteneur principal mobile plein écran */
     .app-container {
         height: 100dvh;
         border-radius: 0;
         border: none;
+        overflow: hidden;
     }
 
+    /* Fond flouté à l'ouverture de la sidebar */
     .sidebar-overlay.active {
         display: block;
         position: fixed;
@@ -872,17 +875,18 @@ header {
         background: rgba(0, 0, 0, 0.5);
         z-index: 90;
         backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
     }
 
-    /* Ancrage mobile iOS/Android */
+    /* Sidebar : ancrage strict top 0 / bottom 0 pour bloquer le débordement iOS */
     .sidebar {
         position: fixed;
         top: 0;
         bottom: 0;
         left: 0;
-        height: auto;
         width: 80%;
-        max-width: 300px;
+        max-width: 280px;
+        height: auto !important; /* Annule 100dvh pour caler le footer sur l'écran réel */
         background: var(--bg-color);
         transform: translateX(-100%);
         margin-left: 0 !important;
@@ -897,53 +901,76 @@ header {
         transform: translateX(0);
     }
 
+    .sidebar-header {
+        flex-shrink: 0;
+    }
+
+    /* Zone scrollable contrainte */
     .sessions-list {
-        flex: 1 1 auto;
+        flex: 1 1 0px;
         height: 0;
         min-height: 0;
         overflow-y: auto;
     }
 
+    /* Footer fixe verrouillé en bas de la barre */
     .sidebar-footer {
         flex-shrink: 0;
         padding: 0.8rem 1rem;
         padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 20px));
         background: var(--bg-color);
+        border-top: 1px solid var(--panel-border);
     }
 
-    /* En-tête mobile en 3 colonnes Grid (Empêche tout chevauchement) */
+    /* Zone de chat globale */
+    .main-chat {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* En-tête mobile verrouillé */
     header {
-        display: grid;
-        grid-template-columns: 36px 1fr auto;
+        display: flex;
         align-items: center;
-        padding: 0.5rem 0.75rem;
-        gap: 0.5rem;
+        justify-content: space-between;
+        padding: 0.6rem 0.8rem;
+        flex-shrink: 0;
+        min-height: 56px;
+        background: rgba(0, 0, 0, 0.25);
+        border-bottom: 1px solid var(--panel-border);
+        z-index: 10;
     }
 
     .icon-btn {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         font-size: 0.85rem;
+        flex-shrink: 0;
     }
 
     .header-actions {
-        gap: 4px;
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
     }
 
-    /* Marque centrée proprement dans la colonne du milieu */
+    /* Branding centré */
     .brand {
         position: static;
         transform: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.4rem;
-        width: 100%;
+        gap: 0.5rem;
+        flex: 1;
         min-width: 0;
+        padding: 0 4px;
     }
 
     .brand i {
-        font-size: 1rem;
+        font-size: 1.1rem;
         flex-shrink: 0;
     }
 
@@ -955,7 +982,7 @@ header {
     }
 
     .brand h1 {
-        font-size: 0.82rem;
+        font-size: 0.85rem;
         font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
@@ -964,19 +991,27 @@ header {
 
     .status-indicator {
         display: flex !important;
-        font-size: 0.6rem;
+        font-size: 0.65rem;
         gap: 4px;
         white-space: nowrap;
     }
 
+    /* Fil de discussion et barre d'envoi */
+    #chat-box {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
     .input-container {
-        padding: 0.8rem 1rem 1rem;
+        flex-shrink: 0;
+        padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 10px));
     }
 }
 
 @media (max-width: 480px) {
     .brand h1 {
-        font-size: 0.78rem;
+        font-size: 0.8rem;
     }
 
     .input-area button span {
