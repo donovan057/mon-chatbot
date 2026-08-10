@@ -865,7 +865,6 @@ header {
         border: none;
     }
 
-    /* Modale de fond flouté lors de l'ouverture sidebar mobile */
     .sidebar-overlay.active {
         display: block;
         position: fixed;
@@ -875,15 +874,16 @@ header {
         backdrop-filter: blur(2px);
     }
 
-    /* Correction ancrage viewport mobile */
+    /* Fix strict hauteur viewport iOS Chrome */
     .sidebar {
         position: fixed;
         top: 0;
         bottom: 0;
         left: 0;
-        height: auto;
         width: 80%;
         max-width: 300px;
+        height: 100%;
+        max-height: -webkit-fill-available;
         background: var(--bg-color);
         transform: translateX(-100%);
         margin-left: 0 !important;
@@ -898,7 +898,21 @@ header {
         transform: translateX(0);
     }
 
-    /* En-tête mobile centré */
+    /* Astuce WebKit : height: 0 force le scroll et remonte le footer */
+    .sessions-list {
+        flex: 1 1 auto;
+        height: 0;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .sidebar-footer {
+        flex-shrink: 0;
+        padding: 0.8rem 1rem;
+        padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 20px));
+        background: var(--bg-color);
+    }
+
     header {
         position: relative;
         padding: 0.6rem 0.8rem;
