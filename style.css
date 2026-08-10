@@ -96,6 +96,7 @@ body {
     justify-content: space-between;
     padding: 1.1rem 1.2rem;
     border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
 }
 
 .sidebar-title {
@@ -138,7 +139,8 @@ body {
 
 /* Liste des sessions */
 .sessions-list {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0; /* CRUCIAL : force la liste à scroller et empêche de pousser le footer */
     overflow-y: auto;
     overflow-x: hidden;
     padding: 10px 8px;
@@ -242,10 +244,11 @@ body.light-mode .session-item:hover {
 
 /* Footer fixe de la Sidebar */
 .sidebar-footer {
-    padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 12px));
     border-top: 1px solid var(--panel-border);
-    background: inherit;
+    background: var(--bg-color);
     flex-shrink: 0;
+    z-index: 10;
 }
 
 .clear-all-btn {
@@ -872,13 +875,15 @@ header {
         backdrop-filter: blur(2px);
     }
 
+    /* Correction ancrage viewport mobile */
     .sidebar {
         position: fixed;
         top: 0;
+        bottom: 0;
         left: 0;
+        height: auto;
         width: 80%;
         max-width: 300px;
-        height: 100dvh;
         background: var(--bg-color);
         transform: translateX(-100%);
         margin-left: 0 !important;
@@ -886,6 +891,7 @@ header {
         z-index: 100;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
 
     .sidebar.open {
