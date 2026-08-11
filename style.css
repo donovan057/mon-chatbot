@@ -1024,3 +1024,14 @@ header {
         border-radius: 10px;
     }
 }
+
+#mic-btn.listening {
+    color: #ff4d4d;
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
