@@ -1,0 +1,8 @@
+# Ignorer les dossiers natifs (Android / iOS) des statistiques
+android/** linguist-vendored
+ios/** linguist-vendored
+
+# Ignorer des extensions spécifiques du calcul des langages
+*.swfit linguist-detectable=false
+*.java linguist-detectable=false
+*.ts linguist-detectable=false
