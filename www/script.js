@@ -1,5 +1,8 @@
 // === 1. UTILITAIRES & CONFIGURATION INITIALE ===
 
+// URL de base de l'API (Incontournable pour Capacitor / Android)
+const API_BASE_URL = 'https://mon-chatbot-chi.vercel.app';
+
 // Générateur universel d'UUID (Compatible local HTTP et Vercel HTTPS)
 function generateUUID() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -140,7 +143,7 @@ function sendMessage() {
 
     showTypingIndicator();
 
-    fetch('/api/chat', {
+    fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -183,7 +186,7 @@ function sendMessage() {
         if (error.message === 'MAINTENANCE_ACTIVE') return;
 
         console.error('Erreur:', error);
-        appendMessage("Désolé, une erreur s'est produite lors de la connexion au serveur.", 'bot');
+        appendMessage(`Détail de l'erreur : ${error.message}`, 'bot');
     });
 }
 
@@ -225,7 +228,7 @@ async function loadHistory(sessionId) {
     }
 
     try {
-        const response = await fetch(`/api/history?session_id=${sessionId}`);
+        const response = await fetch(`${API_BASE_URL}/api/history?session_id=${sessionId}`);
         const data = await response.json();
 
         if (response.ok && Array.isArray(data.messages)) {
@@ -448,7 +451,7 @@ async function fetchAndRenderSessions() {
         saveUserSession(currentSessionId);
         const mySessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
 
-        const response = await fetch('/api/sessions');
+        const response = await fetch(`${API_BASE_URL}/api/sessions`);
         const data = await response.json();
 
         if (response.ok && Array.isArray(data.sessions)) {
@@ -490,7 +493,6 @@ async function fetchAndRenderSessions() {
                 const deleteBtn = item.querySelector('.delete-session-btn');
                 deleteBtn.onclick = async (e) => {
                     e.stopPropagation();
-                    // Appel direct de la fonction personnalisée (pas de confirm() natif)
                     await deleteSession(session.session_id);
                 };
 
@@ -513,7 +515,7 @@ async function deleteSession(sessionId) {
     if (!confirmDelete) return;
 
     try {
-        const response = await fetch(`/api/delete-session?session_id=${sessionId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/delete-session?session_id=${sessionId}`, {
             method: 'DELETE'
         });
 
@@ -560,7 +562,7 @@ async function clearAllSessions() {
 
     try {
         await Promise.all(mySessions.map(sessionId =>
-            fetch(`/api/delete-session?session_id=${sessionId}`, { method: 'DELETE' })
+            fetch(`${API_BASE_URL}/api/delete-session?session_id=${sessionId}`, { method: 'DELETE' })
         ));
 
         sessionsCache.clear();

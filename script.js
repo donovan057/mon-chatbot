@@ -186,7 +186,7 @@ function sendMessage() {
         if (error.message === 'MAINTENANCE_ACTIVE') return;
 
         console.error('Erreur:', error);
-        appendMessage("Désolé, une erreur s'est produite lors de la connexion au serveur.", 'bot');
+        appendMessage(`Détail de l'erreur : ${error.message}`, 'bot');
     });
 }
 
