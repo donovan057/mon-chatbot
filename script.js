@@ -3,7 +3,7 @@
 // URL de base de l'API (Incontournable pour Capacitor / Android)
 const API_BASE_URL = 'https://mon-chatbot-chi.vercel.app';
 
-// Générateur universel d'UUID (Compatible local HTTP et Vercel HTTPS)
+// Générateur universel d'UUID (Compatible local HTTP, HTTPS et Android)
 function generateUUID() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
@@ -23,7 +23,7 @@ localStorage.setItem('session_id', currentSessionId);
 // Cache mémoire pour l'affichage instantané
 const sessionsCache = new Map();
 
-// Sauvegarde locale des sessions de l'utilisateur
+// Sauvegarde locale des sessions créées par l'utilisateur
 function saveUserSession(sessionId) {
     let userSessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
     if (!userSessions.includes(sessionId)) {
@@ -34,6 +34,15 @@ function saveUserSession(sessionId) {
 
 // Initialisation de la première session locale
 saveUserSession(currentSessionId);
+
+// Rendu Markdown sécurisé avec DOMPurify (Protection XSS)
+function renderSafeMarkdown(text) {
+    if (typeof marked !== 'undefined') {
+        const rawHtml = marked.parse(text);
+        return (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(rawHtml) : rawHtml;
+    }
+    return text;
+}
 
 // Configuration de Marked.js + Highlight.js
 if (typeof marked !== 'undefined') {
@@ -54,7 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Écouteurs pour l'envoi de messages
     document.getElementById('send-btn')?.addEventListener('click', sendMessage);
     document.getElementById('user-input')?.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') { sendMessage(); }
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
     });
 
     // Bouton Nouvelle Conversation
@@ -63,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bouton Tout supprimer 
     document.getElementById('clear-all-btn')?.addEventListener('click', clearAllSessions);
 
-    // Bouton Hamburger (3 traits) pour la sidebar & Overlay
+    // Sidebar & Overlay (Mobile & Desktop)
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
@@ -83,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay?.classList.remove('active');
     });
 
-    // Fermer la sidebar en cliquant à l'extérieur (zone vide) sur mobile
+    // Fermer la sidebar lors d'un clic extérieur sur mobile
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 768 && sidebar?.classList.contains('open')) {
             if (!sidebar.contains(e.target) && !toggleSidebarBtn?.contains(e.target)) {
@@ -112,10 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Attacher la copie aux éléments existants au chargement
+    // Attacher les événements de copie
     attachCopyEvents();
 
-    // Charger l'historique Supabase de la session active et la liste des sessions
+    // Charger l'historique de la session active et la liste des conversations
     loadHistory(currentSessionId);
     fetchAndRenderSessions();
 });
@@ -129,19 +141,28 @@ function sendMessage() {
     const messageText = inputField.value.trim();
     if (messageText === '') return;
 
+    // ⚡️ UI OPTIMISTE : Affichage immédiat (0ms de latence)
     appendMessage(messageText, 'user');
     inputField.value = '';
+    
+    // Ajuste la hauteur si c'est un textarea
+    if (inputField.tagName === 'TEXTAREA') {
+        inputField.style.height = 'auto';
+    }
 
     chatHistory.push({ role: 'user', content: messageText });
 
-    // Mise à jour synchrone du cache mémoire
-    if (sessionsCache.has(currentSessionId)) {
-        sessionsCache.get(currentSessionId).push({ sender: 'user', message: messageText });
+    // Mise à jour immédiate du cache mémoire
+    if (!sessionsCache.has(currentSessionId)) {
+        sessionsCache.set(currentSessionId, []);
     }
+    sessionsCache.get(currentSessionId).push({ sender: 'user', message: messageText });
 
     const recentHistory = chatHistory.slice(-10);
-
     showTypingIndicator();
+
+    // Re-calcul immédiat de l'aperçu dans la sidebar
+    fetchAndRenderSessions();
 
     fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
@@ -171,12 +192,11 @@ function sendMessage() {
             appendMessage(data.reply, 'bot');
             chatHistory.push({ role: 'assistant', content: data.reply });
 
-            // Mise à jour du cache mémoire pour le bot
             if (sessionsCache.has(currentSessionId)) {
                 sessionsCache.get(currentSessionId).push({ sender: 'bot', message: data.reply });
             }
 
-            fetchAndRenderSessions(); // Mettre à jour la sidebar après réponse
+            fetchAndRenderSessions();
         } else if (data.error) {
             appendMessage(`Erreur : ${data.error}`, 'bot');
         }
@@ -196,17 +216,12 @@ function renderMessages(messages) {
     const chatBox = document.getElementById('chat-box');
     if (!chatBox) return;
 
-    // Si la conversation est vide sur le serveur
     if (!messages || messages.length === 0) {
-        if (chatBox.children.length === 1 && chatBox.querySelector('.message.bot')) {
-            return;
-        }
         chatBox.innerHTML = '';
         appendMessage("Nouvelle discussion démarrée. Que puis-je faire pour vous ?", 'bot', true);
         return;
     }
 
-    // Si la conversation contient des messages, charger l'historique Supabase
     chatBox.innerHTML = '';
     chatHistory = [];
 
@@ -222,7 +237,7 @@ function renderMessages(messages) {
 async function loadHistory(sessionId) {
     const hasCache = sessionsCache.has(sessionId);
 
-    // 1. Restitution instantanée si disponible en cache
+    // 1. Restitution ultra-rapide si présent en cache
     if (hasCache) {
         renderMessages(sessionsCache.get(sessionId));
     }
@@ -235,7 +250,6 @@ async function loadHistory(sessionId) {
             const previousMessages = sessionsCache.get(sessionId);
             sessionsCache.set(sessionId, data.messages);
 
-            // Mettre à jour le DOM uniquement si l'utilisateur est toujours sur cette session
             if (sessionId === currentSessionId) {
                 const hasChanged = JSON.stringify(previousMessages) !== JSON.stringify(data.messages);
                 if (!hasCache || hasChanged) {
@@ -244,7 +258,7 @@ async function loadHistory(sessionId) {
             }
         }
     } catch (error) {
-        console.error("Erreur lors du chargement de l'historique :", error);
+        console.error("Erreur chargement historique :", error);
     }
 }
 
@@ -303,8 +317,8 @@ function appendMessage(text, type, skipAnimation = false) {
     if (type === 'bot' && !skipAnimation) {
         typeWriterEffect(text, bubbleDiv, chatBox);
     } else {
-        if (type === 'bot' && typeof marked !== 'undefined') {
-            bubbleDiv.innerHTML = marked.parse(text);
+        if (type === 'bot') {
+            bubbleDiv.innerHTML = renderSafeMarkdown(text);
             if (typeof hljs !== 'undefined') {
                 bubbleDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
             }
@@ -315,23 +329,17 @@ function appendMessage(text, type, skipAnimation = false) {
     }
 }
 
-// Machine à écrire
+// Effet Machine à Écrire fluide et sécurisé
 function typeWriterEffect(fullText, element, chatBox) {
     const words = fullText.split(' ');
     let index = 0;
     let currentText = '';
-    const speed = 30;
+    const speed = 25; // Vitesse de frappe optimisée (25ms)
 
     const timer = setInterval(() => {
         if (index < words.length) {
             currentText += (index === 0 ? '' : ' ') + words[index];
-            
-            if (typeof marked !== 'undefined') {
-                element.innerHTML = marked.parse(currentText);
-            } else {
-                element.textContent = currentText;
-            }
-            
+            element.innerHTML = renderSafeMarkdown(currentText);
             chatBox.scrollTop = chatBox.scrollHeight;
             index++;
         } else {
@@ -349,6 +357,8 @@ function typeWriterEffect(fullText, element, chatBox) {
 function showTypingIndicator() {
     const chatBox = document.getElementById('chat-box');
     if (!chatBox) return;
+
+    removeTypingIndicator(); // Évite les doublons
 
     const indicator = document.createElement('div');
     indicator.id = 'typing-indicator';
@@ -411,7 +421,7 @@ function fallbackCopy(text, buttonEl) {
         document.execCommand('copy');
         showCopySuccess(buttonEl);
     } catch (err) {
-        console.error('Erreur de copie:', err);
+        console.error('Erreur copie:', err);
     }
 
     document.body.removeChild(textArea);
@@ -444,7 +454,7 @@ function attachCopyEvents() {
     });
 }
 
-// === 7. GESTION DES SESSIONS SIDEBAR & SUPPRESSION ===
+// === 7. GESTION OPTIMISTE DES SESSIONS SIDEBAR ===
 
 async function fetchAndRenderSessions() {
     try {
@@ -459,14 +469,13 @@ async function fetchAndRenderSessions() {
             if (!sidebarContainer) return;
 
             sidebarContainer.innerHTML = '';
-
-            // Filtrer pour ne conserver que les sessions créées par ce navigateur
             const userOnlySessions = data.sessions.filter(s => mySessions.includes(s.session_id));
 
             userOnlySessions.forEach(session => {
                 const item = document.createElement('div');
                 const isActive = session.session_id === currentSessionId ? 'active' : '';
                 item.className = `session-item ${isActive}`;
+                item.dataset.sessionId = session.session_id;
 
                 item.innerHTML = `
                     <div class="session-info">
@@ -479,6 +488,7 @@ async function fetchAndRenderSessions() {
                 `;
 
                 item.onclick = () => {
+                    if (currentSessionId === session.session_id) return;
                     currentSessionId = session.session_id;
                     localStorage.setItem('session_id', currentSessionId);
                     loadHistory(currentSessionId);
@@ -491,52 +501,53 @@ async function fetchAndRenderSessions() {
                 };
 
                 const deleteBtn = item.querySelector('.delete-session-btn');
-                deleteBtn.onclick = async (e) => {
+                deleteBtn.onclick = (e) => {
                     e.stopPropagation();
-                    await deleteSession(session.session_id);
+                    deleteSession(session.session_id, item);
                 };
 
                 sidebarContainer.appendChild(item);
             });
         }
     } catch (error) {
-        console.error("Erreur lors de la récupération des sessions :", error);
+        console.error("Erreur récupération sessions :", error);
     }
 }
 
-async function deleteSession(sessionId) {
+// ⚡️ SUPPRESSION OPTIMISTE (0ms de latence)
+async function deleteSession(sessionId, domItem) {
     const confirmDelete = await showCustomModal({
         title: "Supprimer la conversation ?",
-        message: "Cette action est irréversible et supprimera l'historique.",
+        message: "Cette action est irréversible.",
         confirmText: "Supprimer",
         iconType: "warning"
     });
 
     if (!confirmDelete) return;
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/delete-session?session_id=${sessionId}`, {
-            method: 'DELETE'
-        });
+    // 1. Suppression visuelle immédiate du DOM
+    if (domItem) domItem.remove();
 
-        if (response.ok) {
-            sessionsCache.delete(sessionId);
-            
-            let userSessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
-            userSessions = userSessions.filter(id => id !== sessionId);
-            localStorage.setItem('my_sessions', JSON.stringify(userSessions));
+    // 2. Nettoyage immédiat du cache & LocalStorage
+    sessionsCache.delete(sessionId);
+    let userSessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
+    userSessions = userSessions.filter(id => id !== sessionId);
+    localStorage.setItem('my_sessions', JSON.stringify(userSessions));
 
-            if (sessionId === currentSessionId) {
-                startNewChat();
-            } else {
-                fetchAndRenderSessions();
-            }
-        }
-    } catch (error) {
-        console.error("Erreur lors de la suppression de la session :", error);
+    // 3. Bascule instantanée si la session active est supprimée
+    if (sessionId === currentSessionId) {
+        startNewChat();
     }
+
+    // 4. Exécution de la requête serveur en arrière-plan sans bloquer l'UI
+    fetch(`${API_BASE_URL}/api/delete-session?session_id=${sessionId}`, {
+        method: 'DELETE'
+    }).catch(error => {
+        console.error("Erreur suppression serveur :", error);
+    });
 }
 
+// ⚡️ EFFACEMENT GLOBAL OPTIMISTE
 async function clearAllSessions() {
     const mySessions = JSON.parse(localStorage.getItem('my_sessions') || '[]');
 
@@ -553,27 +564,30 @@ async function clearAllSessions() {
 
     const confirmDelete = await showCustomModal({
         title: "Tout supprimer ?",
-        message: "Voulez-vous vraiment supprimer TOUTES vos conversations ? Cette action est définitive.",
+        message: "Voulez-vous vraiment effacer TOUTES vos conversations ?",
         confirmText: "Tout effacer",
         iconType: "warning"
     });
 
     if (!confirmDelete) return;
 
-    try {
-        await Promise.all(mySessions.map(sessionId =>
-            fetch(`${API_BASE_URL}/api/delete-session?session_id=${sessionId}`, { method: 'DELETE' })
-        ));
+    // 1. Vidage instantané de l'interface & stockage
+    const sidebarContainer = document.getElementById('sessions-list');
+    if (sidebarContainer) sidebarContainer.innerHTML = '';
+    
+    sessionsCache.clear();
+    localStorage.removeItem('my_sessions');
 
-        sessionsCache.clear();
-        localStorage.removeItem('my_sessions');
-        startNewChat();
-    } catch (error) {
-        console.error("Erreur lors de la suppression globale :", error);
-    }
+    // 2. Réinitialisation de l'écran principal
+    startNewChat();
+
+    // 3. Suppression en masse sur le serveur en arrière-plan
+    Promise.allSettled(mySessions.map(sessionId =>
+        fetch(`${API_BASE_URL}/api/delete-session?session_id=${sessionId}`, { method: 'DELETE' })
+    )).catch(error => console.error("Erreur lors de la suppression globale :", error));
 }
 
-// Fonction pour ouvrir la modale personnalisée sous forme de Promise
+// Fonction utilitaire pour la modale personnalisée
 function showCustomModal({ title, message, isAlert = false, confirmText = "Confirmer", iconType = "warning" }) {
     return new Promise((resolve) => {
         const modal = document.getElementById('custom-modal');
@@ -592,7 +606,6 @@ function showCustomModal({ title, message, isAlert = false, confirmText = "Confi
         messageEl.textContent = message;
         confirmBtn.textContent = confirmText;
 
-        // Type d'icône & couleur du bouton de confirmation
         iconEl.className = `modal-icon ${iconType}`;
         if (iconType === 'warning') {
             iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
@@ -602,20 +615,11 @@ function showCustomModal({ title, message, isAlert = false, confirmText = "Confi
             confirmBtn.style.background = '#3b82f6';
         }
 
-        // Mode Alerte (un seul bouton) vs Confirmation (deux boutons)
         cancelBtn.style.display = isAlert ? 'none' : 'block';
-
         modal.classList.remove('hidden');
 
-        const handleConfirm = () => {
-            cleanup();
-            resolve(true);
-        };
-
-        const handleCancel = () => {
-            cleanup();
-            resolve(false);
-        };
+        const handleConfirm = () => { cleanup(); resolve(true); };
+        const handleCancel = () => { cleanup(); resolve(false); };
 
         const cleanup = () => {
             modal.classList.add('hidden');
