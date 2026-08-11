@@ -1,42 +1,69 @@
-# 🤖 AI Chatbot - Assistant Intelligent Full-Stack
+<h1 align="center">🤖 AI Chatbot - Assistant Intelligent Full-Stack & Mobile</h1>
 
-![Vercel Deployment](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Groq API](https://img.shields.io/badge/Groq_API-F05032?style=for-the-badge&logo=lightning&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+<p align="center">
+  <a href="https://mon-chatbot-chi.vercel.app" target="_blank">
+    <img src="https://img.shields.io/badge/Vercel_App-Online-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel App" />
+  </a>
+  <a href="https://groq.com" target="_blank">
+    <img src="https://img.shields.io/badge/Groq_API-F05032?style=for-the-badge&logo=lightning&logoColor=white" alt="Groq API" />
+  </a>
+  <a href="https://supabase.com" target="_blank">
+    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  </a>
+  <a href="https://capacitorjs.com" target="_blank">
+    <img src="https://img.shields.io/badge/Capacitor-119EFF?style=for-the-badge&logo=capacitor&logoColor=white" alt="Capacitor" />
+  </a>
+  <a href="https://developer.android.com" target="_blank">
+    <img src="https://img.shields.io/badge/Android-34A853?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
+  </a>
+  <a href="https://developer.mozilla.org/fr/docs/Web/JavaScript" target="_blank">
+    <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
+  </a>
+</p>
 
-Un chatbot intéractif full-stack combinant d'inférence du modèle **Llama 3.3 70B via Groq API**, la persistance des données multi-sessions avec **Supabase**, et un déploiement serverless ultra-rapide sur **Vercel**.
+Application de chatbot IA interactive, ultra-rapide et responsive, fonctionnelle sur **Web et Mobile (Android Natif)**. Le projet associe l'inférence du modèle **Llama 3.3 70B via Groq API**, la persistance des données multi-sessions avec **Supabase**, un backend serverless sécurisé sur **Vercel**, et un build natif cross-platform via **Capacitor**.
 
 ---
 
-## ⚡️ Fontionnalités principales
+## ⚡️ Fonctionnalités Principales
 
-* **🧠 Mémoire contextuelle & Gestion par session :** Conversation fluide grâce à l'historique de messages. Chaque nouvelle discussion génère un `session_id` unique (`UUID`).
-* **🗄️ Persistance des données :** Sauvegarde automatique des échanges (messages utilisateur et réponses du bot) dans une base PostgreSQL hébergée sur Supabase.
-* **✨ Effet Machine à Écrire (Typewriter) :** Rendu fluide et dynamique des réponses générées mot par mot.
-* **📝 Support Markdown & Coloration de code :** Intégration de `Marked.js` pour la mise en forme du texte et `Highlight.js` pour la coloration syntaxique des blocs de code.
-* **📋 Copie universelle en un clic :** Bouton de copie du contenu dans le presse-papier avec gestion du fallback HTTP/HTTPS.
-* **🌙 Mode Sombre / Clair (Dark/Light Theme) :** Thème dynamique configurable à tout moment par l'utilisateur.
+* **📱 Multi-plateforme (Web & Android Natif) :** Interface PWA réactive utilisable sur navigateur et encapsulée en application Android native via Capacitor.
+* **🧠 Mémoire Contextuelle & Multi-sessions :** Gestion de l'historique de conversation grâce à un identifiant unique par session (`session_id` UUID v4).
+* **🗄️ Persistance des Données :** Sauvegarde automatique des échanges (utilisateur et bot) dans une base PostgreSQL hébergée sur Supabase.
+* **🚀 Inférence Ultra-Rapide (Groq LPU) :** Génération de réponses quasi-instantanée grâce au modèle `llama-3.3-70b-versatile`.
+* **✨ Effet Machine à Écrire (Typewriter) :** Rendu fluide et naturel des réponses générées mot par mot.
+* **📝 Markdown & Coloration de Code :** Support du rendu Markdown (`Marked.js`) et surbrillance syntaxique des blocs de code (`Highlight.js`).
+* **🎨 Interface Adaptative (Dark / Light Theme) :** Basculement dynamique du thème avec conservation de la préférence utilisateur.
+* **🔒 Sécurité & Protection des Clés API :** Architecture backend serverless isolant les clés d'environnement sensibles et gestion complète du CORS pour WebView.
 
 ---
+
+## 🛠️ Stack Technique
 
 | Composant | Technologie | Description |
 | :--- | :--- | :--- |
-| **Frontend** | HTML5, CSS3, JavaScript (ES6+) | Interface utilisateur réactive et responsive. |
-| **Parsing & Formatting** | Marked.js, Highlight.js, FontAwesome | Interprétation Markdown, coloration syntaxique et icônes. |
-| **Backend Serverless** | Node.js (Vercel Serverless API) | Masquage des clés API et traitement sécurisé des requêtes. |
-| **IA / LLM** | Groq API (`llama-3.3-70b-versatile`) | Génération de réponses ultra-rapide par IA. |
-| **Base de données** | Supabase (PostgreSQL) | Stockage persistant et structuré des historiques de discussion. |
+| **Frontend** | HTML5, CSS3, JavaScript (ES6+) | Interface utilisateur réactive, animations et gestion du DOM. |
+| **Mobile Native** | Capacitor JS | Bridge natif et compilation vers la plateforme Android. |
+| **Parsing & Formatting** | Marked.js, Highlight.js, FontAwesome | Interprétation Markdown, coloration syntaxique et iconographie. |
+| **Backend Serverless** | Node.js (Vercel Serverless API) | Masquage des clés API, routage et gestion des en-têtes CORS. |
+| **IA / LLM Engine** | Groq API (`llama-3.3-70b-versatile`) | Inférence haute performance du modèle LLM. |
+| **Base de Données** | Supabase (PostgreSQL) | Stockage persistant et structuré des historiques de discussion. |
 
 ---
 
-## 🗂️ Architecture du Projet
+## 🗂️ Structure du Projet
 
 ```text
 mon-chatbot/
 ├── api/
-│    └── chat.js           # Fonction serverless Vercel (gestion Groq + Supabase)
-├── index.html             # Structure HTML5 de l'interface du chat
-├── style.css              # Styles CSS avec support Dark/Light mode
-├── script.js              # Logique client, événements UI et gestion des sessions
-└── README.md              # Documentation du projet
+│   ├── chat.js            # API Serverless (requêtes Groq & requêtes Supabase)
+│   ├── history.js         # Récupération de l'historique par session
+│   ├── sessions.js        # Récupération de la liste des sessions
+│   └── delete-session.js # Suppression sécurisée de sessions
+├── www/                   # Dossier de build distribué vers Capacitor
+├── index.html             # Structure HTML5 principale
+├── style.css              # Feuille de style globale avec variables thème
+├── script.js              # Logique client, événements UI, gestion du cache & sessions
+├── capacitor.config.ts    # Configuration du runtime natif Android / Capacitor
+├── vercel.json            # Configuration du serveur Vercel & en-têtes CORS
+└── README.md              # Documentation officielle du projet
